@@ -14,13 +14,24 @@ import { Star, ArrowLeft, ShoppingCart, MessageSquare } from "lucide-react";
 
 async function getProduct(id: string) {
 	try {
-		// Use absolute URL for server-side rendering
-		const baseUrl = process.env.VERCEL_URL
-			? `https://${process.env.VERCEL_URL}`
-			: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+		// For server-side rendering, we need to construct the URL properly
+		// In development, use localhost, in production use the request headers
+		const protocol =
+			process.env.NODE_ENV === "production" ? "https" : "http";
+		const host = process.env.VERCEL_URL || "localhost:3000";
+		const baseUrl = `${protocol}://${host}`;
+
+		console.log(
+			"Fetching product with URL:",
+			`${baseUrl}/api/products/${id}`
+		);
+
 		const res = await fetch(`${baseUrl}/api/products/${id}`, {
 			cache: "no-store",
 		});
+
+		console.log("Response status:", res.status);
+
 		if (!res.ok) {
 			console.error(
 				"Failed to fetch product:",
@@ -29,7 +40,9 @@ async function getProduct(id: string) {
 			);
 			return null;
 		}
+
 		const data = await res.json();
+		console.log("Product data received:", !!data);
 		return data;
 	} catch (error) {
 		console.error("Error fetching product:", error);
@@ -42,7 +55,11 @@ export default async function ProductPage({
 }: {
 	params: { id: string };
 }) {
+	console.log("ProductPage called with params:", params);
+
 	const product = await getProduct(params.id);
+	console.log("Product result:", !!product);
+
 	if (!product) return notFound();
 
 	const averageRating =

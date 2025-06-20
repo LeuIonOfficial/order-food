@@ -1,18 +1,52 @@
 import nodemailer from "nodemailer";
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+// Configure email transporter based on environment
+const createTransporter = () => {
+  // If using Resend (recommended for production)
+  if (process.env.RESEND_API_KEY) {
+    return nodemailer.createTransport({
+      host: "smtp.resend.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: "resend",
+        pass: process.env.RESEND_API_KEY,
+      },
+    });
+  }
+
+  // Fallback to Gmail SMTP
+  if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    return nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+  }
+
+  // Mock transporter for development/testing
+  console.warn("No email credentials found. Using mock transporter.");
+  return nodemailer.createTransport({
+    host: "localhost",
+    port: 1025,
+    secure: false,
+    auth: {
+      user: "test",
+      pass: "test",
+    },
+  });
+};
+
+const transporter = createTransporter();
 
 export async function sendVerificationEmail(email: string, token: string) {
   const verificationUrl = `${process.env.NEXTAUTH_URL}/auth/verify?token=${token}`;
+  const fromEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER || "noreply@gustulcasei.com";
 
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: fromEmail,
     to: email,
     subject: "Verify your email - Gustul Casei",
     html: `
@@ -32,18 +66,20 @@ export async function sendVerificationEmail(email: string, token: string) {
 
   try {
     await transporter.sendMail(mailOptions);
+    console.log(`Verification email sent to ${email}`);
     return true;
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error("Error sending verification email:", error);
     return false;
   }
 }
 
 export async function sendPasswordResetEmail(email: string, token: string) {
   const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${token}`;
+  const fromEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER || "noreply@gustulcasei.com";
 
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: fromEmail,
     to: email,
     subject: "Reset your password - Gustul Casei",
     html: `
@@ -62,9 +98,10 @@ export async function sendPasswordResetEmail(email: string, token: string) {
 
   try {
     await transporter.sendMail(mailOptions);
+    console.log(`Password reset email sent to ${email}`);
     return true;
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error("Error sending password reset email:", error);
     return false;
   }
 } 
