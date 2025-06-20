@@ -25,6 +25,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface DashboardStats {
 	totalUsers: number;
 	totalProducts: number;

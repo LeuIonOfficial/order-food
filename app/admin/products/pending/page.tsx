@@ -5,6 +5,10 @@ import { useSession } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default function PendingProductsPage() {
 	const { data: session } = useSession();
 	const [products, setProducts] = useState<any[]>([]);
