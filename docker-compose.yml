@@ -1,0 +1,36 @@
+services:
+    db:
+        image: postgres:15-alpine
+        restart: always
+        environment:
+            POSTGRES_DB: homemade_marketplace
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+        ports:
+            - "5432:5432"
+        volumes:
+            - db_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U postgres"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    app:
+        build: .
+        depends_on:
+            db:
+                condition: service_healthy
+        environment:
+            DATABASE_URL: postgres://postgres:postgres@db:5432/homemade_marketplace
+            NODE_ENV: development
+            NEXT_PUBLIC_API_URL: http://localhost:3000/api
+        ports:
+            - "3000:3000"
+        volumes:
+            - .:/app
+            - /app/node_modules
+        command: sh -c "npx prisma db push && npx prisma generate && npx tsx prisma/seed.ts && npm run dev"
+
+volumes:
+    db_data:
