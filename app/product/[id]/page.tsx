@@ -15,8 +15,9 @@ import { Star, ArrowLeft, ShoppingCart, MessageSquare } from "lucide-react";
 async function getProduct(id: string) {
 	try {
 		// Use absolute URL for server-side rendering
-		const baseUrl =
-			process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+		const baseUrl = process.env.VERCEL_URL
+			? `https://${process.env.VERCEL_URL}`
+			: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 		const res = await fetch(`${baseUrl}/api/products/${id}`, {
 			cache: "no-store",
 		});

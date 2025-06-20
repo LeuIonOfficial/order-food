@@ -1,0 +1,175 @@
+# Cursor Rules for Gustul Casei - Homemade Marketplace
+
+## Project Overview
+This is "Gustul Casei" (Taste of Home), a Next.js marketplace connecting home cooks with buyers. The platform allows home cooks to sell homemade food products and buyers to discover and purchase authentic homemade meals.
+
+## Tech Stack
+- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend**: Next.js API routes, Prisma ORM, PostgreSQL
+- **Authentication**: NextAuth.js with email verification
+- **State Management**: Zustand, React Query
+- **Styling**: Tailwind CSS with custom components
+- **Deployment**: Vercel, Docker support
+
+## Architecture Guidelines
+
+### File Structure
+- `/app` - Next.js App Router pages and API routes
+- `/components` - Reusable UI components
+- `/lib` - Utilities, services, and configurations
+- `/prisma` - Database schema and migrations
+- `/docs` - Project documentation
+
+### Database Schema
+- **User**: id, email, name, role (USER, COOK, ADMIN), verified, createdAt
+- **Product**: id, name, description, price, category, cookId, approved, createdAt
+- **Order**: id, userId, productId, quantity, status, totalAmount, createdAt
+- **Review**: id, productId, userId, rating, comment, createdAt
+
+### API Patterns
+- Use Next.js API routes in `/app/api`
+- Implement proper error handling and status codes
+- Use Prisma for database operations
+- Support both authenticated and guest users where appropriate
+
+## Development Guidelines
+
+### Code Standards
+- Use TypeScript for all new code
+- Follow ESLint and Prettier configurations
+- Use meaningful variable and function names
+- Add JSDoc comments for complex functions
+- Implement proper error handling
+
+### Component Guidelines
+- Use shadcn/ui components as base
+- Create reusable components in `/components`
+- Use Tailwind CSS for styling
+- Implement responsive design
+- Add loading states and error boundaries
+
+### State Management
+- Use React Query for server state
+- Use Zustand for client state
+- Implement optimistic updates where appropriate
+- Handle loading and error states properly
+
+### Authentication
+- Use NextAuth.js for authentication
+- Implement email verification for new users
+- Support guest ordering without registration
+- Use proper role-based access control
+
+## Key Features
+
+### User Roles
+1. **Buyers**: Browse products, place orders, leave reviews
+2. **Cooks**: Create products, manage orders, view earnings
+3. **Admins**: Approve products, manage users, view analytics
+
+### Core Functionality
+- Product browsing and search
+- Order placement (guest and authenticated)
+- Product approval workflow
+- Email notifications
+- Admin dashboard
+- Responsive design
+
+## API Endpoints
+
+### Public Endpoints
+- `GET /api/products` - List approved products
+- `GET /api/products/[id]` - Get product details
+- `POST /api/orders` - Create order (guest/authenticated)
+
+### Protected Endpoints
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/verify` - Email verification
+- `GET /api/admin/*` - Admin operations
+
+## Common Patterns
+
+### Error Handling
+```typescript
+try {
+  // Operation
+} catch (error) {
+  console.error('Error:', error);
+  return NextResponse.json(
+    { error: 'Internal server error' },
+    { status: 500 }
+  );
+}
+```
+
+### Database Operations
+```typescript
+import { prisma } from '@/lib/prisma';
+
+const result = await prisma.model.findMany({
+  where: { /* conditions */ },
+  include: { /* relations */ }
+});
+```
+
+### API Response Format
+```typescript
+return NextResponse.json({
+  success: true,
+  data: result,
+  message: 'Operation successful'
+});
+```
+
+## Deployment Considerations
+- Environment variables for database and email
+- Prisma migrations in production
+- Docker support for containerized deployment
+- Vercel deployment configuration
+
+## Testing Guidelines
+- Test API endpoints with proper status codes
+- Verify database operations
+- Test authentication flows
+- Check responsive design
+
+## Security Best Practices
+- Validate all inputs
+- Use proper authentication
+- Implement rate limiting
+- Sanitize user data
+- Use environment variables for secrets
+
+## Performance Guidelines
+- Use React Query for caching
+- Implement proper loading states
+- Optimize database queries
+- Use Next.js Image component
+- Minimize bundle size
+
+## When Helping with Code
+1. Follow the established patterns and conventions
+2. Use TypeScript for type safety
+3. Implement proper error handling
+4. Add loading states and user feedback
+5. Ensure responsive design
+6. Follow the component structure
+7. Use the correct API endpoints
+8. Implement proper authentication checks
+9. Add appropriate validation
+10. Consider the user experience
+
+## Common Issues to Watch For
+- Prisma client initialization errors
+- Invalid URL fetches in server components (use absolute URLs)
+- Missing environment variables
+- Authentication state management
+- Database connection issues
+- Email service configuration
+
+## Documentation References
+- Check `/docs/` directory for detailed documentation
+- API reference in `/docs/API_REFERENCE.md`
+- Development guidelines in `/docs/DEVELOPMENT_GUIDELINES.md`
+- Technical architecture in `/docs/TECHNICAL_ARCHITECTURE.md`
+- MVP requirements in `/docs/MVP_REQUIREMENTS.md`

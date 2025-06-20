@@ -57,7 +57,16 @@ export class ProductService {
         }
       })
       
-      return products as Product[]
+      // Transform Prisma results to match Product interface
+      return products.map(product => ({
+        ...product,
+        createdAt: product.createdAt.toISOString(),
+        updatedAt: product.updatedAt.toISOString(),
+        reviews: product.reviews.map(review => ({
+          ...review,
+          createdAt: review.createdAt.toISOString()
+        }))
+      })) as Product[]
     } catch (error) {
       console.error('Error fetching products:', error)
       return []
@@ -89,7 +98,18 @@ export class ProductService {
         },
       })
       
-      return product as Product | null
+      if (!product) return null
+      
+      // Transform Prisma result to match Product interface
+      return {
+        ...product,
+        createdAt: product.createdAt.toISOString(),
+        updatedAt: product.updatedAt.toISOString(),
+        reviews: product.reviews.map(review => ({
+          ...review,
+          createdAt: review.createdAt.toISOString()
+        }))
+      } as Product
     } catch (error) {
       console.error('Error fetching product:', error)
       return null
@@ -125,7 +145,16 @@ export class ProductService {
         }
       })
       
-      return products as Product[]
+      // Transform Prisma results to match Product interface
+      return products.map(product => ({
+        ...product,
+        createdAt: product.createdAt.toISOString(),
+        updatedAt: product.updatedAt.toISOString(),
+        reviews: product.reviews.map(review => ({
+          ...review,
+          createdAt: review.createdAt.toISOString()
+        }))
+      })) as Product[]
     } catch (error) {
       console.error('Error fetching products by category:', error)
       return []
@@ -167,7 +196,16 @@ export class ProductService {
         }
       })
       
-      return products as Product[]
+      // Transform Prisma results to match Product interface
+      return products.map(product => ({
+        ...product,
+        createdAt: product.createdAt.toISOString(),
+        updatedAt: product.updatedAt.toISOString(),
+        reviews: product.reviews.map(review => ({
+          ...review,
+          createdAt: review.createdAt.toISOString()
+        }))
+      })) as Product[]
     } catch (error) {
       console.error('Error searching products:', error)
       return []
@@ -249,7 +287,16 @@ export class ProductService {
         orderBy
       })
       
-      return products as Product[]
+      // Transform Prisma results to match Product interface
+      return products.map(product => ({
+        ...product,
+        createdAt: product.createdAt.toISOString(),
+        updatedAt: product.updatedAt.toISOString(),
+        reviews: product.reviews.map(review => ({
+          ...review,
+          createdAt: review.createdAt.toISOString()
+        }))
+      })) as Product[]
     } catch (error) {
       console.error('Error fetching products with filters:', error)
       return []

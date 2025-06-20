@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
 	Card,
 	CardHeader,
@@ -19,6 +20,8 @@ import {
 	Phone,
 	FileText,
 	Calculator,
+	User,
+	Mail,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -36,6 +39,7 @@ interface Product {
 
 export default function OrderPage({ params }: { params: { id: string } }) {
 	const router = useRouter();
+	const { data: session, status } = useSession();
 	const [product, setProduct] = useState<Product | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [submitting, setSubmitting] = useState(false);
@@ -44,6 +48,8 @@ export default function OrderPage({ params }: { params: { id: string } }) {
 		address: "",
 		phone: "",
 		notes: "",
+		customerName: "",
+		customerEmail: "",
 	});
 
 	// Fetch product data
@@ -57,37 +63,76 @@ export default function OrderPage({ params }: { params: { id: string } }) {
 			.catch(() => setLoading(false));
 	}, [params.id]);
 
+	// Pre-fill form data if user is logged in
+	useEffect(() => {
+		if (session?.user) {
+			setFormData((prev) => ({
+				...prev,
+				customerName: session.user.name || "",
+				customerEmail: session.user.email || "",
+				address: (session.user as any).address || "",
+				phone: (session.user as any).phone || "",
+			}));
+		}
+	}, [session]);
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!product) return;
 
+		// Validate guest order fields
+		if (
+			!session?.user &&
+			(!formData.customerName || !formData.customerEmail)
+		) {
+			alert(
+				"Numele și email-ul sunt obligatorii pentru comenzi fără cont"
+			);
+			return;
+		}
+
 		setSubmitting(true);
 		try {
+			const orderData: any = {
+				items: [
+					{
+						productId: product.id,
+						quantity: formData.quantity,
+					},
+				],
+				address: formData.address,
+				phone: formData.phone,
+				notes: formData.notes,
+			};
+
+			// Add customer info for guest orders
+			if (!session?.user) {
+				orderData.customerName = formData.customerName;
+				orderData.customerEmail = formData.customerEmail;
+			}
+
 			const response = await fetch("/api/orders", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					productId: product.id,
-					cookId: product.cook.id,
-					quantity: formData.quantity,
-					address: formData.address,
-					phone: formData.phone,
-					notes: formData.notes,
-					total: product.price * formData.quantity,
-				}),
+				body: JSON.stringify(orderData),
 			});
 
 			if (response.ok) {
 				router.push("/order-success");
+			} else {
+				const errorData = await response.json();
+				console.error("Order failed:", errorData);
+				alert(errorData.error || "Eroare la plasarea comenzii");
 			}
 		} catch (error) {
 			console.error("Order failed:", error);
+			alert("Eroare la plasarea comenzii");
 		} finally {
 			setSubmitting(false);
 		}
 	};
 
-	if (loading) {
+	if (loading || status === "loading") {
 		return (
 			<main className="max-w-2xl mx-auto py-8 px-4 animate-fade-in-up">
 				<Card className="shadow-lg">
@@ -134,6 +179,7 @@ export default function OrderPage({ params }: { params: { id: string } }) {
 	}
 
 	const total = product.price * formData.quantity;
+	const isGuestOrder = !session?.user;
 
 	return (
 		<main className="max-w-2xl mx-auto py-8 px-4 animate-fade-in-up">
@@ -160,6 +206,11 @@ export default function OrderPage({ params }: { params: { id: string } }) {
 						<ShoppingCart className="w-6 h-6 text-orange-500" />
 						Comandă: {product.name}
 					</CardTitle>
+					{isGuestOrder && (
+						<p className="text-sm text-gray-600 mt-2">
+							Comandă fără cont - vei primi un email de confirmare
+						</p>
+					)}
 				</CardHeader>
 				<CardContent className="space-y-6">
 					{/* Product Summary */}
@@ -187,6 +238,50 @@ export default function OrderPage({ params }: { params: { id: string } }) {
 					</div>
 
 					<form onSubmit={handleSubmit} className="space-y-6">
+						{/* Customer Info for Guest Orders */}
+						{isGuestOrder && (
+							<>
+								<div className="space-y-2">
+									<label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+										<User className="w-4 h-4 text-orange-500" />
+										Numele tău
+									</label>
+									<Input
+										value={formData.customerName}
+										onChange={(e) =>
+											setFormData((prev) => ({
+												...prev,
+												customerName: e.target.value,
+											}))
+										}
+										placeholder="Numele tău complet"
+										className="focus:border-orange-300 focus:ring-orange-200"
+										required={isGuestOrder}
+									/>
+								</div>
+
+								<div className="space-y-2">
+									<label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+										<Mail className="w-4 h-4 text-orange-500" />
+										Email
+									</label>
+									<Input
+										type="email"
+										value={formData.customerEmail}
+										onChange={(e) =>
+											setFormData((prev) => ({
+												...prev,
+												customerEmail: e.target.value,
+											}))
+										}
+										placeholder="email@example.com"
+										className="focus:border-orange-300 focus:ring-orange-200"
+										required={isGuestOrder}
+									/>
+								</div>
+							</>
+						)}
+
 						{/* Quantity */}
 						<div className="space-y-2">
 							<label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -333,7 +428,9 @@ export default function OrderPage({ params }: { params: { id: string } }) {
 						) : (
 							<div className="flex items-center gap-2">
 								<ShoppingCart className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-								Plasează comanda
+								{isGuestOrder
+									? "Plasează comanda fără cont"
+									: "Plasează comanda"}
 							</div>
 						)}
 					</Button>
